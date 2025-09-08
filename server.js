@@ -14,9 +14,10 @@ const port = process.env.PORT || 5000;
 connectDB();
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', methods: ['GET','POST','PUT'], allowedHeaders: ['Content-Type'] }));
+// app.use(cors({ origin: 'http://localhost:3000', methods: ['GET','POST','PUT'], allowedHeaders: ['Content-Type'] }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+// app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/quotes', quoteRoutes);
