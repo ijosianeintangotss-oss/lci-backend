@@ -26,4 +26,4 @@ app.use('/api/messages', messageRoutes);
 // Serve uploads
 app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
-app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+app.listen(port, () => console.log(`Server running on https://lcirwanda-backend001.onrender.com:${port}`));
