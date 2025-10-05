@@ -6,6 +6,8 @@ require('dotenv').config();
 
 const quoteRoutes = require('./routes/quoteRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,14 +16,14 @@ const port = process.env.PORT || 5000;
 connectDB();
 
 // Middleware
-// app.use(cors({ origin: 'http://localhost:3000', methods: ['GET','POST','PUT'], allowedHeaders: ['Content-Type'] }));
-app.use(express.json());
 app.use(cors());
-// app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // Routes
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
 
 // Serve uploads
 app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
