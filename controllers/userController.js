@@ -90,11 +90,11 @@ exports.getUserDashboard = async (req, res) => {
       });
     }
 
-    // Get user's quotes - FIXED: using correct field name
+    // Get user's quotes
     const quotes = await Quote.find({ email }).sort({ createdAt: -1 });
     console.log('Found quotes:', quotes.length);
     
-    // Get user's messages - FIXED: using correct field name
+    // Get user's messages
     const messages = await Message.find({ email }).sort({ createdAt: -1 });
     console.log('Found messages:', messages.length);
 

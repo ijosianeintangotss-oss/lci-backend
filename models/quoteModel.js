@@ -7,7 +7,7 @@ const quoteSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  email: { // CHANGED: from userEmail to email
+  email: {
     type: String,
     required: true,
     trim: true
@@ -19,7 +19,7 @@ const quoteSchema = new mongoose.Schema({
   service: {
     type: String,
     required: true,
-    enum: ['translation', 'interpretation', 'proofreading', 'localization']
+    enum: ['translation', 'interpretation', 'proofreading', 'localization', 'content-creation'] // ADDED content-creation
   },
   documentType: {
     type: String,
@@ -39,7 +39,7 @@ const quoteSchema = new mongoose.Schema({
   },
   urgency: {
     type: String,
-    required: true,
+    required: true, // This field is required
     enum: ['standard', 'urgent', 'very-urgent']
   },
   additionalNotes: {
