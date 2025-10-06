@@ -1,10 +1,17 @@
 // controllers/messageController.js
-
 const Message = require('../models/messageModel');
 
 exports.createMessage = async (req, res) => {
   try {
-    const newMessage = new Message(req.body);
+    const { fullName, email, subject, message } = req.body;
+    
+    const newMessage = new Message({
+      fullName,
+      email, // This will be stored in the email field
+      subject,
+      message
+    });
+    
     await newMessage.save();
     res.status(200).json({ message: 'Message sent successfully' });
   } catch (error) {
@@ -14,14 +21,14 @@ exports.createMessage = async (req, res) => {
 
 exports.getMessages = async (req, res) => {
   try {
-    const messages = await Message.find().sort({ submittedAt: -1 });
+    const messages = await Message.find().sort({ createdAt: -1 });
     res.json(messages.map(m => ({ ...m.toObject(), id: m._id.toString() })));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get messages for specific client
+// Get messages for specific client - FIXED: using correct field name
 exports.getClientMessages = async (req, res) => {
   try {
     const { email } = req.query;
@@ -30,7 +37,10 @@ exports.getClientMessages = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const messages = await Message.find({ email }).sort({ submittedAt: -1 });
+    console.log('Fetching messages for email:', email);
+    const messages = await Message.find({ email }).sort({ createdAt: -1 });
+    console.log('Found messages:', messages.length);
+
     const messagesWithId = messages.map(message => ({
       ...message.toObject(),
       id: message._id.toString()
@@ -54,7 +64,10 @@ exports.updateMessageReply = async (req, res) => {
 
     const updatedMessage = await Message.findByIdAndUpdate(
       id, 
-      { adminReply }, 
+      { 
+        adminReply,
+        status: 'replied'
+      }, 
       { new: true }
     );
 

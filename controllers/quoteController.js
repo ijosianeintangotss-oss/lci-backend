@@ -1,5 +1,4 @@
 //controllers/quoteController.js
-
 const Quote = require('../models/quoteModel');
 
 exports.createQuote = async (req, res) => {
@@ -14,9 +13,20 @@ exports.createQuote = async (req, res) => {
     const paymentScreenshot = req.files['paymentScreenshot'] ? `/uploads/${req.files['paymentScreenshot'][0].filename}` : null;
 
     const newQuote = new Quote({
-      fullName, email, phone, service, documentType, sourceLanguage,
-      targetLanguage, turnaround, wordCount, additionalRequirements,
-      files, paymentScreenshot, status: 'pending', userId
+      fullName, 
+      email, // This will be stored in the email field
+      phone, 
+      service, 
+      documentType, 
+      sourceLanguage,
+      targetLanguage, 
+      turnaround, 
+      wordCount, 
+      additionalRequirements,
+      files, 
+      paymentScreenshot, 
+      status: 'pending', 
+      userId
     });
 
     await newQuote.save();
@@ -28,7 +38,7 @@ exports.createQuote = async (req, res) => {
 
 exports.getQuotes = async (req, res) => {
   try {
-    const quotes = await Quote.find().sort({ submittedAt: -1 });
+    const quotes = await Quote.find().sort({ createdAt: -1 });
     res.json(quotes.map(q => ({ ...q.toObject(), id: q._id.toString() })));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -53,7 +63,7 @@ exports.updateQuoteStatus = async (req, res) => {
   }
 };
 
-// Get quotes for specific client
+// Get quotes for specific client - FIXED: using correct field name
 exports.getClientQuotes = async (req, res) => {
   try {
     const { email } = req.query;
@@ -62,7 +72,10 @@ exports.getClientQuotes = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const quotes = await Quote.find({ email }).sort({ submittedAt: -1 });
+    console.log('Fetching quotes for email:', email);
+    const quotes = await Quote.find({ email }).sort({ createdAt: -1 });
+    console.log('Found quotes:', quotes.length);
+
     const quotesWithId = quotes.map(quote => ({
       ...quote.toObject(),
       id: quote._id.toString()

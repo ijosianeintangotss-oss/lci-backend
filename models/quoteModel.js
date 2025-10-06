@@ -2,28 +2,81 @@
 const mongoose = require('mongoose');
 
 const quoteSchema = new mongoose.Schema({
-  fullName: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: String,
-  service: { type: String, required: true },
-  documentType: { type: String, required: true },
-  sourceLanguage: { type: String, required: true },
-  targetLanguage: { type: String, required: true },
-  turnaround: { type: String, required: true },
-  wordCount: String,
-  additionalRequirements: String,
-  files: [String],
-  paymentScreenshot: String,
-  submittedAt: { type: Date, default: Date.now },
-  status: { type: String, default: 'pending', enum: ['pending', 'inProgress', 'completed', 'cancelled'] },
-  adminReply: { type: String, default: '' },
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User',
-    required: false 
+  fullName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  email: { // CHANGED: from userEmail to email
+    type: String,
+    required: true,
+    trim: true
+  },
+  phone: {
+    type: String,
+    trim: true
+  },
+  service: {
+    type: String,
+    required: true,
+    enum: ['translation', 'interpretation', 'proofreading', 'localization']
+  },
+  documentType: {
+    type: String,
+    required: true
+  },
+  sourceLanguage: {
+    type: String,
+    required: true
+  },
+  targetLanguage: {
+    type: String,
+    required: true
+  },
+  wordCount: {
+    type: Number,
+    required: true
+  },
+  urgency: {
+    type: String,
+    required: true,
+    enum: ['standard', 'urgent', 'very-urgent']
+  },
+  additionalNotes: {
+    type: String,
+    trim: true
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'inProgress', 'completed', 'cancelled'],
+    default: 'pending'
+  },
+  adminReply: {
+    type: String,
+    trim: true
+  },
+  price: {
+    type: Number
+  },
+  estimatedTime: {
+    type: String
+  },
+  files: [{
+    type: String
+  }],
+  paymentScreenshot: {
+    type: String
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
+}, {
+  timestamps: true
 });
 
-quoteSchema.index({ submittedAt: -1 });
-quoteSchema.index({ email: 1 });
+// Add indexes for better query performance
+quoteSchema.index({ email: 1, createdAt: -1 });
+quoteSchema.index({ status: 1 });
+
 module.exports = mongoose.model('Quote', quoteSchema);

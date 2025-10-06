@@ -1,11 +1,19 @@
 // routes/userRoutes.js
-
 const express = require('express');
-const { getUsers, updateUserStatus } = require('../controllers/userController');
+const { 
+  getUsers, 
+  updateUserStatus, 
+  getUserDashboard 
+} = require('../controllers/userController');
+const { authMiddleware, isAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.get('/', getUsers);
-// router.put('/:id/status', updateUserStatus);
+// Admin routes
+router.get('/', authMiddleware, isAdmin, getUsers);
+router.put('/:id/status', authMiddleware, isAdmin, updateUserStatus);
+
+// Client dashboard route
+router.get('/dashboard', authMiddleware, getUserDashboard);
 
 module.exports = router;

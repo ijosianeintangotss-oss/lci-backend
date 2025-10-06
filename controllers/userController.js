@@ -1,5 +1,7 @@
 // controllers/userController.js
 const User = require('../models/userModel');
+const Quote = require('../models/quoteModel');
+const Message = require('../models/messageModel');
 
 // Get all users (for admin)
 exports.getUsers = async (req, res) => {
@@ -26,7 +28,6 @@ exports.getUsers = async (req, res) => {
     });
   }
 };
-
 
 // Update user status (for admin)
 exports.updateUserStatus = async (req, res) => {
@@ -63,6 +64,84 @@ exports.updateUserStatus = async (req, res) => {
     console.error('Update user status error:', error);
     res.status(500).json({ 
       message: 'Failed to update user status',
+      error: error.message 
+    });
+  }
+};
+
+// Get user dashboard data
+exports.getUserDashboard = async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        message: 'Email is required' 
+      });
+    }
+
+    console.log('Fetching dashboard for email:', email);
+
+    // Get user details
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ 
+        message: 'User not found' 
+      });
+    }
+
+    // Get user's quotes - FIXED: using correct field name
+    const quotes = await Quote.find({ email }).sort({ createdAt: -1 });
+    console.log('Found quotes:', quotes.length);
+    
+    // Get user's messages - FIXED: using correct field name
+    const messages = await Message.find({ email }).sort({ createdAt: -1 });
+    console.log('Found messages:', messages.length);
+
+    const dashboardData = {
+      user: {
+        id: user._id.toString(),
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        company: user.company,
+        status: user.status,
+        createdAt: user.createdAt
+      },
+      quotes: quotes.map(quote => ({
+        id: quote._id.toString(),
+        service: quote.service,
+        documentType: quote.documentType,
+        sourceLanguage: quote.sourceLanguage,
+        targetLanguage: quote.targetLanguage,
+        wordCount: quote.wordCount,
+        urgency: quote.urgency,
+        additionalNotes: quote.additionalNotes,
+        status: quote.status,
+        adminReply: quote.adminReply,
+        price: quote.price,
+        estimatedTime: quote.estimatedTime,
+        submittedAt: quote.createdAt,
+        updatedAt: quote.updatedAt
+      })),
+      messages: messages.map(message => ({
+        id: message._id.toString(),
+        subject: message.subject,
+        message: message.message,
+        adminReply: message.adminReply,
+        status: message.status,
+        submittedAt: message.createdAt,
+        updatedAt: message.updatedAt
+      }))
+    };
+
+    console.log('Dashboard data prepared successfully');
+    res.json(dashboardData);
+
+  } catch (error) {
+    console.error('Get user dashboard error:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch user dashboard data',
       error: error.message 
     });
   }
