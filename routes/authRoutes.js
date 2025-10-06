@@ -1,5 +1,4 @@
 // routes/authRoutes.js
-
 const express = require('express');
 const { clientRegister, clientLogin } = require('../controllers/authController');
 

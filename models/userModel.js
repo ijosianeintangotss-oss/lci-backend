@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
   status: { 
     type: String, 
     enum: ['pending', 'approved', 'rejected'], 
-    default: 'pending' 
+    default: 'approved' // Changed default to 'approved'
   },
   googleId: {
     type: String,
@@ -47,7 +47,8 @@ const userSchema = new mongoose.Schema({
     default: Date.now 
   },
   approvedAt: { 
-    type: Date 
+    type: Date,
+    default: Date.now // Set default to current date
   }
 });
 

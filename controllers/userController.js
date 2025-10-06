@@ -27,6 +27,7 @@ exports.getUsers = async (req, res) => {
   }
 };
 
+
 // Update user status (for admin)
 exports.updateUserStatus = async (req, res) => {
   try {

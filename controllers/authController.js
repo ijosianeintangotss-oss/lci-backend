@@ -32,7 +32,7 @@ exports.clientRegister = async (req, res) => {
       });
     }
 
-    // Create new user
+    // Create new user - SET STATUS TO APPROVED IMMEDIATELY
     const user = new User({
       fullName,
       email,
@@ -40,14 +40,15 @@ exports.clientRegister = async (req, res) => {
       phone: phone || '',
       company: company || '',
       role: 'client',
-      status: 'pending'
+      status: 'approved', // Changed from 'pending' to 'approved'
+      approvedAt: new Date() // Set approval date immediately
     });
 
     await user.save();
     console.log('User registered successfully:', user.email);
 
     res.status(201).json({
-      message: 'Registration successful! Your account is pending admin approval.',
+      message: 'Registration successful! You can now login to your client portal.',
       user: {
         id: user._id,
         fullName: user.fullName,
@@ -65,7 +66,7 @@ exports.clientRegister = async (req, res) => {
   }
 };
 
-// Client Login
+// Client Login - REMOVED STATUS CHECK
 exports.clientLogin = async (req, res) => {
   try {
     console.log('Login request received:', req.body);
@@ -87,12 +88,7 @@ exports.clientLogin = async (req, res) => {
       });
     }
 
-    // Check if account is approved
-    if (user.status !== 'approved') {
-      return res.status(401).json({ 
-        message: 'Your account is pending approval. Please wait for admin approval.' 
-      });
-    }
+    // REMOVED STATUS CHECK - All users can login regardless of status
 
     // Check password
     const isPasswordValid = await user.comparePassword(password);
