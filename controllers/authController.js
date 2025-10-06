@@ -1,11 +1,10 @@
 // controllers/authController.js
-
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 
-// Generate JWT Token
+// Generate JWT Token - FIXED: Use consistent payload
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'your-secret-key', { 
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'your-secret-key', { 
     expiresIn: '30d' 
   });
 };
@@ -47,12 +46,18 @@ exports.clientRegister = async (req, res) => {
     await user.save();
     console.log('User registered successfully:', user.email);
 
+    // Generate token for immediate login
+    const token = generateToken(user._id);
+
     res.status(201).json({
       message: 'Registration successful! You can now login to your client portal.',
+      token,
       user: {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
+        phone: user.phone,
+        company: user.company,
         status: user.status
       }
     });
@@ -126,30 +131,4 @@ exports.clientLogin = async (req, res) => {
   }
 };
 
-// Verify Token Middleware
-exports.verifyToken = async (req, res, next) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({ 
-        message: 'No token, authorization denied' 
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    req.user = await User.findById(decoded.userId).select('-password');
-    
-    if (!req.user) {
-      return res.status(401).json({ 
-        message: 'Token is not valid' 
-      });
-    }
-
-    next();
-  } catch (error) {
-    res.status(401).json({ 
-      message: 'Token is not valid' 
-    });
-  }
-};
+// Verify Token Middleware - REMOVED (using separate authMiddleware.js)

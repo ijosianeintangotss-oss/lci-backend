@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post('/', upload.fields([{ name: 'files' }, { name: 'paymentScreenshot' }]), createQuote);
 router.get('/', authMiddleware, getQuotes);
-router.get('/client', authMiddleware, getClientQuotes); // Changed from client-quotes to client
+router.get('/client', authMiddleware, getClientQuotes);
 router.put('/:id/status', authMiddleware, updateQuoteStatus);
 
 module.exports = router;

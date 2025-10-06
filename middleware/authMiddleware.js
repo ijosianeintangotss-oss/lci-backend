@@ -12,21 +12,40 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    console.log('Token received:', token.substring(0, 20) + '...');
+
+    // Use the same secret as in authController
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    console.log('Decoded token:', decoded);
+    
     const user = await User.findById(decoded.id).select('-password');
     
     if (!user) {
+      console.log('User not found for ID:', decoded.id);
       return res.status(401).json({ 
-        message: 'Token is not valid' 
+        message: 'Token is not valid - user not found' 
       });
     }
 
+    console.log('User authenticated:', user.email);
     req.user = user;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ 
+        message: 'Invalid token' 
+      });
+    } else if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        message: 'Token expired' 
+      });
+    }
+    
     res.status(401).json({ 
-      message: 'Token is not valid' 
+      message: 'Token is not valid',
+      error: error.message 
     });
   }
 };

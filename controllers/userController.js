@@ -69,21 +69,15 @@ exports.updateUserStatus = async (req, res) => {
   }
 };
 
-// Get user dashboard data
+// Get user dashboard data - FIXED: Better error handling
 exports.getUserDashboard = async (req, res) => {
   try {
-    const { email } = req.query;
+    const userEmail = req.user.email; // Get email from authenticated user
     
-    if (!email) {
-      return res.status(400).json({ 
-        message: 'Email is required' 
-      });
-    }
+    console.log('Fetching dashboard for authenticated user:', userEmail);
 
-    console.log('Fetching dashboard for email:', email);
-
-    // Get user details
-    const user = await User.findOne({ email });
+    // Get user details from authenticated user
+    const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(404).json({ 
         message: 'User not found' 
@@ -91,11 +85,11 @@ exports.getUserDashboard = async (req, res) => {
     }
 
     // Get user's quotes
-    const quotes = await Quote.find({ email }).sort({ createdAt: -1 });
+    const quotes = await Quote.find({ email: userEmail }).sort({ createdAt: -1 });
     console.log('Found quotes:', quotes.length);
     
     // Get user's messages
-    const messages = await Message.find({ email }).sort({ createdAt: -1 });
+    const messages = await Message.find({ email: userEmail }).sort({ createdAt: -1 });
     console.log('Found messages:', messages.length);
 
     const dashboardData = {
@@ -135,7 +129,7 @@ exports.getUserDashboard = async (req, res) => {
       }))
     };
 
-    console.log('Dashboard data prepared successfully');
+    console.log('Dashboard data prepared successfully for:', userEmail);
     res.json(dashboardData);
 
   } catch (error) {
