@@ -1,11 +1,11 @@
-//controllers/quoteController.js
+// controllers/quoteController.js
 const Quote = require('../models/quoteModel');
 
 exports.createQuote = async (req, res) => {
   try {
     const {
       fullName, email, phone, service, documentType,
-      sourceLanguage, targetLanguage, urgency, wordCount, // ADDED urgency
+      sourceLanguage, targetLanguage, urgency, wordCount,
       additionalRequirements, userId
     } = req.body;
 
@@ -14,6 +14,15 @@ exports.createQuote = async (req, res) => {
       sourceLanguage, targetLanguage, urgency, wordCount,
       additionalRequirements
     });
+
+    // Map frontend urgency values to backend values
+    const urgencyMap = {
+      'rush': 'very-urgent',
+      'standard': 'standard',
+      'extended': 'standard'
+    };
+
+    const backendUrgency = urgencyMap[urgency] || 'standard';
 
     // Validate required fields
     if (!urgency) {
@@ -28,8 +37,13 @@ exports.createQuote = async (req, res) => {
       });
     }
 
-    // Validate service type
-    const validServices = ['translation', 'interpretation', 'proofreading', 'localization', 'content-creation'];
+    // Validate service type - expanded to match frontend services
+    const validServices = [
+      'translation', 'interpretation', 'proofreading', 'localization', 'content-creation',
+      'certified', 'transcription', 'cv-support', 'mtpe', 'glossaries', 
+      'back-translation', 'ai-translation', 'social-media'
+    ];
+    
     if (!validServices.includes(service)) {
       return res.status(400).json({ 
         message: `Invalid service type. Must be one of: ${validServices.join(', ')}` 
@@ -38,7 +52,7 @@ exports.createQuote = async (req, res) => {
 
     // Validate urgency
     const validUrgencies = ['standard', 'urgent', 'very-urgent'];
-    if (!validUrgencies.includes(urgency)) {
+    if (!validUrgencies.includes(backendUrgency)) {
       return res.status(400).json({ 
         message: `Invalid urgency. Must be one of: ${validUrgencies.join(', ')}` 
       });
@@ -55,9 +69,9 @@ exports.createQuote = async (req, res) => {
       documentType, 
       sourceLanguage,
       targetLanguage, 
-      urgency, // ADDED urgency
-      wordCount, 
-      additionalNotes: additionalRequirements, // Mapping additionalRequirements to additionalNotes
+      urgency: backendUrgency,
+      wordCount: wordCount || 0, 
+      additionalNotes: additionalRequirements,
       files, 
       paymentScreenshot, 
       status: 'pending', 
@@ -83,7 +97,11 @@ exports.createQuote = async (req, res) => {
 exports.getQuotes = async (req, res) => {
   try {
     const quotes = await Quote.find().sort({ createdAt: -1 });
-    res.json(quotes.map(q => ({ ...q.toObject(), id: q._id.toString() })));
+    res.json(quotes.map(q => ({ 
+      ...q.toObject(), 
+      id: q._id.toString(),
+      submittedAt: q.createdAt // Add submittedAt for frontend compatibility
+    })));
   } catch (error) {
     console.error('Get quotes error:', error);
     res.status(500).json({ 
@@ -134,7 +152,8 @@ exports.getClientQuotes = async (req, res) => {
 
     const quotesWithId = quotes.map(quote => ({
       ...quote.toObject(),
-      id: quote._id.toString()
+      id: quote._id.toString(),
+      submittedAt: quote.createdAt
     }));
 
     res.json(quotesWithId);
