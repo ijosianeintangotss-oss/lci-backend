@@ -1,3 +1,5 @@
+// controllers/authController.js
+
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 
@@ -11,7 +13,16 @@ const generateToken = (userId) => {
 // Client Registration
 exports.clientRegister = async (req, res) => {
   try {
+    console.log('Registration request received:', req.body);
+    
     const { fullName, email, password, phone, company } = req.body;
+
+    // Check required fields
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ 
+        message: 'Full name, email, and password are required' 
+      });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -26,13 +37,14 @@ exports.clientRegister = async (req, res) => {
       fullName,
       email,
       password,
-      phone,
-      company,
+      phone: phone || '',
+      company: company || '',
       role: 'client',
       status: 'pending'
     });
 
     await user.save();
+    console.log('User registered successfully:', user.email);
 
     res.status(201).json({
       message: 'Registration successful! Your account is pending admin approval.',
@@ -56,7 +68,16 @@ exports.clientRegister = async (req, res) => {
 // Client Login
 exports.clientLogin = async (req, res) => {
   try {
+    console.log('Login request received:', req.body);
+    
     const { email, password } = req.body;
+
+    // Check required fields
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Email and password are required' 
+      });
+    }
 
     // Find user by email
     const user = await User.findOne({ email });
@@ -83,6 +104,8 @@ exports.clientLogin = async (req, res) => {
 
     // Generate token
     const token = generateToken(user._id);
+
+    console.log('User logged in successfully:', user.email);
 
     res.json({
       message: 'Login successful',

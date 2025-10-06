@@ -1,3 +1,5 @@
+// server.js
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -29,3 +31,4 @@ app.use('/api/auth', authRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
 app.listen(port, () => console.log(`Server running on https://lcirwanda-backend001.onrender.com:${port}`));
+

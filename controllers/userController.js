@@ -1,3 +1,4 @@
+// controllers/userController.js
 const User = require('../models/userModel');
 
 // Get all users (for admin)

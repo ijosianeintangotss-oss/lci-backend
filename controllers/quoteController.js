@@ -1,3 +1,5 @@
+//controllers/quoteController.js
+
 const Quote = require('../models/quoteModel');
 
 exports.createQuote = async (req, res) => {
