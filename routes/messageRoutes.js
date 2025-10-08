@@ -10,10 +10,10 @@ const { authMiddleware } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Public route - for clients to send messages
+// Public routes
 router.post('/', createMessage);
 
-// Protected routes - require authentication
+// Protected routes
 router.get('/', authMiddleware, getMessages);
 router.get('/client', authMiddleware, getClientMessages);
 router.put('/:id/reply', authMiddleware, updateMessageReply);
