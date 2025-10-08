@@ -19,7 +19,7 @@ const quoteSchema = new mongoose.Schema({
   service: {
     type: String,
     required: true,
-    enum: ['translation', 'interpretation', 'proofreading', 'localization', 'content-creation'] // ADDED content-creation
+    enum: ['translation', 'interpretation', 'proofreading', 'localization', 'content-creation', 'certified', 'transcription', 'cv-support', 'mtpe', 'glossaries', 'back-translation', 'ai-translation', 'social-media']
   },
   documentType: {
     type: String,
@@ -35,11 +35,11 @@ const quoteSchema = new mongoose.Schema({
   },
   wordCount: {
     type: Number,
-    required: true
+    default: 0
   },
   urgency: {
     type: String,
-    required: true, // This field is required
+    required: true,
     enum: ['standard', 'urgent', 'very-urgent']
   },
   additionalNotes: {
