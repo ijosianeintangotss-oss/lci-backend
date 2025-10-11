@@ -37,7 +37,7 @@ exports.createQuote = async (req, res) => {
       });
     }
 
-    // Validate service type
+    // Validate service type - expanded to match frontend services
     const validServices = [
       'translation', 'interpretation', 'proofreading', 'localization', 'content-creation',
       'certified', 'transcription', 'cv-support', 'mtpe', 'glossaries', 
@@ -111,30 +111,24 @@ exports.getQuotes = async (req, res) => {
   }
 };
 
-// ENHANCED: Update quote with admin reply and files
+// Update quote with admin reply - FIXED with file upload
 exports.updateQuoteStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, adminReply, price, estimatedTime } = req.body;
     
-    // Check if files were uploaded
-    const replyFiles = req.files && req.files['replyFiles'] 
-      ? req.files['replyFiles'].map(file => `/uploads/${file.filename}`)
-      : [];
-
-    const updateData = { status };
+    const updateData = { 
+      status,
+      repliedAt: new Date()
+    };
+    
     if (adminReply !== undefined) updateData.adminReply = adminReply;
     if (price !== undefined) updateData.price = price;
     if (estimatedTime !== undefined) updateData.estimatedTime = estimatedTime;
-    
-    // Add reply files if any
-    if (replyFiles.length > 0) {
-      updateData.replyFiles = replyFiles;
-    }
 
-    // Update repliedAt if admin is replying
-    if (adminReply) {
-      updateData.repliedAt = new Date();
+    // Handle file uploads
+    if (req.files && req.files.length > 0) {
+      updateData.replyFiles = req.files.map(file => `/uploads/${file.filename}`);
     }
 
     const updatedQuote = await Quote.findByIdAndUpdate(id, updateData, { new: true });
@@ -180,31 +174,6 @@ exports.getClientQuotes = async (req, res) => {
     console.error('Get client quotes error:', error);
     res.status(500).json({ 
       message: 'Failed to fetch client quotes',
-      error: error.message 
-    });
-  }
-};
-
-// NEW: Get quote by ID for admin
-exports.getQuoteById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const quote = await Quote.findById(id);
-    
-    if (!quote) {
-      return res.status(404).json({ message: 'Quote not found' });
-    }
-
-    res.json({
-      ...quote.toObject(),
-      id: quote._id.toString(),
-      submittedAt: quote.createdAt
-    });
-  } catch (error) {
-    console.error('Get quote by ID error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch quote',
       error: error.message 
     });
   }

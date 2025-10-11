@@ -1,5 +1,7 @@
 // controllers/messageController.js
 const Message = require('../models/messageModel');
+const path = require('path');
+const fs = require('fs');
 
 exports.createMessage = async (req, res) => {
   try {
@@ -22,7 +24,11 @@ exports.createMessage = async (req, res) => {
 exports.getMessages = async (req, res) => {
   try {
     const messages = await Message.find().sort({ createdAt: -1 });
-    res.json(messages.map(m => ({ ...m.toObject(), id: m._id.toString() })));
+    res.json(messages.map(m => ({ 
+      ...m.toObject(), 
+      id: m._id.toString(),
+      sentAt: m.createdAt 
+    })));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -43,7 +49,8 @@ exports.getClientMessages = async (req, res) => {
 
     const messagesWithId = messages.map(message => ({
       ...message.toObject(),
-      id: message._id.toString()
+      id: message._id.toString(),
+      sentAt: message.createdAt
     }));
 
     res.json(messagesWithId);
@@ -56,26 +63,21 @@ exports.getClientMessages = async (req, res) => {
   }
 };
 
-// Update message with admin reply - ENHANCED: Added file upload and better response
+// Update message with admin reply - FIXED with file upload
 exports.updateMessageReply = async (req, res) => {
   try {
     const { id } = req.params;
     const { adminReply } = req.body;
 
-    // Check if files were uploaded
-    const replyFiles = req.files && req.files['replyFiles'] 
-      ? req.files['replyFiles'].map(file => `/uploads/${file.filename}`)
-      : [];
-
-    const updateData = { 
+    const updateData = {
       adminReply,
       status: 'replied',
       repliedAt: new Date()
     };
 
-    // Add reply files if any
-    if (replyFiles.length > 0) {
-      updateData.replyFiles = replyFiles;
+    // Handle file uploads
+    if (req.files && req.files.length > 0) {
+      updateData.replyFiles = req.files.map(file => `/uploads/${file.filename}`);
     }
 
     const updatedMessage = await Message.findByIdAndUpdate(
@@ -97,33 +99,6 @@ exports.updateMessageReply = async (req, res) => {
     });
   } catch (error) {
     console.error('Update message reply error:', error);
-    res.status(500).json({ 
-      message: 'Failed to update message reply',
-      error: error.message 
-    });
-  }
-};
-
-// NEW: Get message by ID for admin
-exports.getMessageById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const message = await Message.findById(id);
-    
-    if (!message) {
-      return res.status(404).json({ message: 'Message not found' });
-    }
-
-    res.json({
-      ...message.toObject(),
-      id: message._id.toString()
-    });
-  } catch (error) {
-    console.error('Get message by ID error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch message',
-      error: error.message 
-    });
+    res.status(500).json({ message: error.message });
   }
 };

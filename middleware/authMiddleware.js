@@ -14,9 +14,30 @@ const authMiddleware = async (req, res, next) => {
 
     console.log('Token received:', token.substring(0, 20) + '...');
 
+    // Check if it's an admin token (base64 encoded)
+    if (token.length > 100) {
+      try {
+        // Try to decode as base64 (admin token)
+        const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
+        
+        if (decoded.role === 'admin') {
+          console.log('Admin token verified');
+          req.user = {
+            id: 'admin',
+            email: 'admin@lcirwanda.com',
+            role: 'admin',
+            fullName: 'Administrator'
+          };
+          return next();
+        }
+      } catch (base64Error) {
+        console.log('Not a base64 admin token, trying JWT...');
+      }
+    }
+
     // Use the same secret as in authController
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    console.log('Decoded token:', decoded);
+    console.log('Decoded JWT token:', decoded);
     
     const user = await User.findById(decoded.id).select('-password');
     
