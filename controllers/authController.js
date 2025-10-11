@@ -4,20 +4,21 @@ const jwt = require('jsonwebtoken');
 
 // Generate JWT Token
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'fallback-secret-key', { 
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'your-secret-key', { 
     expiresIn: '30d' 
   });
 };
 
-// Client Registration
-exports.clientRegister = async (req, res) => {
+// Client Register
+const clientRegister = async (req, res) => {
   try {
-    console.log('📝 Registration request received');
+    console.log('Registration request received:', req.body);
     
     const { fullName, email, password, phone, company } = req.body;
 
     // Input validation
     if (!fullName || !email || !password) {
+      console.log('Missing required fields');
       return res.status(400).json({ 
         message: 'Full name, email and password are required' 
       });
@@ -25,8 +26,8 @@ exports.clientRegister = async (req, res) => {
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
-    
     if (existingUser) {
+      console.log('User already exists:', email);
       return res.status(409).json({ 
         message: 'User already exists with this email' 
       });
@@ -44,10 +45,11 @@ exports.clientRegister = async (req, res) => {
     });
 
     await user.save();
-    console.log('✅ User registered successfully:', user.email);
 
     // Generate token
     const token = generateToken(user._id);
+
+    console.log('Registration successful for:', user.email);
 
     // Send response
     res.status(201).json({
@@ -65,15 +67,7 @@ exports.clientRegister = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Registration error:', error);
-    
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: 'Validation error',
-        error: error.message 
-      });
-    }
-    
+    console.error('Registration error:', error);
     res.status(500).json({ 
       message: 'Server error during registration',
       error: error.message 
@@ -81,33 +75,41 @@ exports.clientRegister = async (req, res) => {
   }
 };
 
-// Client Login
-exports.clientLogin = async (req, res) => {
+// Client Login - FIXED with better error handling
+const clientLogin = async (req, res) => {
   try {
-    console.log('🔐 Login request received');
+    console.log('Login request received:', req.body);
     
     const { email, password } = req.body;
 
     // Input validation
     if (!email || !password) {
+      console.log('Missing credentials');
       return res.status(400).json({ 
         message: 'Email and password are required' 
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email });
+    // Find user by email with timeout protection
+    const user = await User.findOne({ email }).maxTimeMS(10000);
     
     if (!user) {
+      console.log('User not found:', email);
       return res.status(401).json({ 
         message: 'Invalid email or password' 
       });
     }
 
-    // Check password
-    const isPasswordValid = await user.comparePassword(password);
+    // Check password with timeout
+    const isPasswordValid = await Promise.race([
+      user.comparePassword(password),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Password check timeout')), 10000)
+      )
+    ]);
 
     if (!isPasswordValid) {
+      console.log('Invalid password for:', email);
       return res.status(401).json({ 
         message: 'Invalid email or password' 
       });
@@ -116,7 +118,7 @@ exports.clientLogin = async (req, res) => {
     // Generate token
     const token = generateToken(user._id);
 
-    console.log('✅ Login successful for:', user.email);
+    console.log('Login successful for:', user.email);
 
     // Send response
     res.json({
@@ -134,10 +136,23 @@ exports.clientLogin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Login error:', error);
+    console.error('Login error:', error);
+    
+    if (error.message === 'Password check timeout') {
+      return res.status(408).json({ 
+        message: 'Login timeout. Please try again.' 
+      });
+    }
+    
     res.status(500).json({ 
       message: 'Server error during login',
       error: error.message 
     });
   }
+};
+
+// Export all functions - FIXED: Uncommented exports
+module.exports = {
+  clientRegister,
+  clientLogin
 };

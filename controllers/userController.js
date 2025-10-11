@@ -4,7 +4,7 @@ const Quote = require('../models/quoteModel');
 const Message = require('../models/messageModel');
 
 // Get all users (for admin)
-exports.getUsers = async (req, res) => {
+const getUsers = async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
     
@@ -30,7 +30,7 @@ exports.getUsers = async (req, res) => {
 };
 
 // Update user status (for admin)
-exports.updateUserStatus = async (req, res) => {
+const updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -70,7 +70,7 @@ exports.updateUserStatus = async (req, res) => {
 };
 
 // Get user dashboard data - FIXED: Better error handling
-exports.getUserDashboard = async (req, res) => {
+const getUserDashboard = async (req, res) => {
   try {
     const userEmail = req.user.email; // Get email from authenticated user
     
@@ -115,7 +115,9 @@ exports.getUserDashboard = async (req, res) => {
         adminReply: quote.adminReply,
         price: quote.price,
         estimatedTime: quote.estimatedTime,
+        replyFiles: quote.replyFiles || [],
         submittedAt: quote.createdAt,
+        repliedAt: quote.repliedAt,
         updatedAt: quote.updatedAt
       })),
       messages: messages.map(message => ({
@@ -123,8 +125,10 @@ exports.getUserDashboard = async (req, res) => {
         subject: message.subject,
         message: message.message,
         adminReply: message.adminReply,
+        replyFiles: message.replyFiles || [],
         status: message.status,
         submittedAt: message.createdAt,
+        repliedAt: message.repliedAt,
         updatedAt: message.updatedAt
       }))
     };
@@ -139,4 +143,11 @@ exports.getUserDashboard = async (req, res) => {
       error: error.message 
     });
   }
+};
+
+// Export all functions - FIXED: Uncommented exports
+module.exports = {
+  getUsers,
+  updateUserStatus,
+  getUserDashboard
 };

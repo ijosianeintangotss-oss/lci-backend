@@ -1,7 +1,7 @@
 // controllers/quoteController.js
 const Quote = require('../models/quoteModel');
 
-exports.createQuote = async (req, res) => {
+const createQuote = async (req, res) => {
   try {
     const {
       fullName, email, phone, service, documentType,
@@ -94,7 +94,7 @@ exports.createQuote = async (req, res) => {
   }
 };
 
-exports.getQuotes = async (req, res) => {
+const getQuotes = async (req, res) => {
   try {
     const quotes = await Quote.find().sort({ createdAt: -1 });
     res.json(quotes.map(q => ({ 
@@ -112,7 +112,7 @@ exports.getQuotes = async (req, res) => {
 };
 
 // Update quote with admin reply - FIXED with file upload
-exports.updateQuoteStatus = async (req, res) => {
+const updateQuoteStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, adminReply, price, estimatedTime } = req.body;
@@ -150,8 +150,8 @@ exports.updateQuoteStatus = async (req, res) => {
   }
 };
 
-// Get quotes for specific client
-exports.getClientQuotes = async (req, res) => {
+// Get quotes for specific client - FIXED: Ensure this function exists
+const getClientQuotes = async (req, res) => {
   try {
     const { email } = req.query;
     
@@ -177,4 +177,12 @@ exports.getClientQuotes = async (req, res) => {
       error: error.message 
     });
   }
+};
+
+// Export all functions - FIXED: Added exports
+module.exports = {
+  createQuote,
+  getQuotes,
+  updateQuoteStatus,
+  getClientQuotes
 };

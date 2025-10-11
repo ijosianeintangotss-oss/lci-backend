@@ -1,4 +1,3 @@
-// models/messageModel.js
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
@@ -40,9 +39,5 @@ const messageSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
-// Add indexes for better query performance
-messageSchema.index({ email: 1, createdAt: -1 });
-messageSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Message', messageSchema);

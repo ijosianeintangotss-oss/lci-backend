@@ -4,21 +4,23 @@ const {
   createQuote, 
   getQuotes, 
   updateQuoteStatus,
-  getClientQuotes,
-  getQuoteById
+  getClientQuotes 
 } = require('../controllers/quoteController');
 const upload = require('../middleware/upload');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware, isAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // Public routes
 router.post('/', upload.fields([{ name: 'files' }, { name: 'paymentScreenshot' }]), createQuote);
 
-// Protected routes
-router.get('/', authMiddleware, getQuotes);
+// Protected routes - ADMIN only for all quotes
+router.get('/', authMiddleware, isAdmin, getQuotes);
+
+// Protected routes - Client can access their own quotes
 router.get('/client', authMiddleware, getClientQuotes);
-router.get('/:id', authMiddleware, getQuoteById);
-router.put('/:id/status', authMiddleware, upload.fields([{ name: 'replyFiles' }]), updateQuoteStatus);
+
+// Protected routes - ADMIN only for status updates with file upload
+router.put('/:id/status', authMiddleware, isAdmin, upload.array('replyFiles'), updateQuoteStatus);
 
 module.exports = router;

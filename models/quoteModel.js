@@ -1,4 +1,3 @@
-// models/quoteModel.js
 const mongoose = require('mongoose');
 
 const quoteSchema = new mongoose.Schema({
@@ -55,15 +54,15 @@ const quoteSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  replyFiles: [{
-    type: String
-  }],
   price: {
     type: Number
   },
   estimatedTime: {
     type: String
   },
+  replyFiles: [{
+    type: String
+  }],
   repliedAt: {
     type: Date
   },
@@ -80,9 +79,5 @@ const quoteSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
-// Add indexes for better query performance
-quoteSchema.index({ email: 1, createdAt: -1 });
-quoteSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Quote', quoteSchema);

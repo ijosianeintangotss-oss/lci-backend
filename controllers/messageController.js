@@ -1,9 +1,7 @@
 // controllers/messageController.js
 const Message = require('../models/messageModel');
-const path = require('path');
-const fs = require('fs');
 
-exports.createMessage = async (req, res) => {
+const createMessage = async (req, res) => {
   try {
     const { fullName, email, subject, message } = req.body;
     
@@ -21,7 +19,7 @@ exports.createMessage = async (req, res) => {
   }
 };
 
-exports.getMessages = async (req, res) => {
+const getMessages = async (req, res) => {
   try {
     const messages = await Message.find().sort({ createdAt: -1 });
     res.json(messages.map(m => ({ 
@@ -34,8 +32,8 @@ exports.getMessages = async (req, res) => {
   }
 };
 
-// Get messages for specific client
-exports.getClientMessages = async (req, res) => {
+// Get messages for specific client - FIXED: Ensure this function exists
+const getClientMessages = async (req, res) => {
   try {
     const { email } = req.query;
     
@@ -64,7 +62,7 @@ exports.getClientMessages = async (req, res) => {
 };
 
 // Update message with admin reply - FIXED with file upload
-exports.updateMessageReply = async (req, res) => {
+const updateMessageReply = async (req, res) => {
   try {
     const { id } = req.params;
     const { adminReply } = req.body;
@@ -101,4 +99,12 @@ exports.updateMessageReply = async (req, res) => {
     console.error('Update message reply error:', error);
     res.status(500).json({ message: error.message });
   }
+};
+
+// Export all functions - FIXED: Added exports
+module.exports = {
+  createMessage,
+  getMessages,
+  getClientMessages,
+  updateMessageReply
 };
