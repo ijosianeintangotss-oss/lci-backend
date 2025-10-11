@@ -7,7 +7,7 @@ const messageSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  email: { // CHANGED: from userEmail to email
+  email: {
     type: String,
     required: true,
     trim: true
@@ -26,10 +26,16 @@ const messageSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  replyFiles: [{
+    type: String
+  }],
   status: {
     type: String,
     enum: ['pending', 'replied', 'resolved'],
     default: 'pending'
+  },
+  repliedAt: {
+    type: Date
   }
 }, {
   timestamps: true

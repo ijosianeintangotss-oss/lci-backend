@@ -1,115 +1,86 @@
 // server.js
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const connectDB = require('./config/db');
+const fs = require('fs');
 require('dotenv').config();
 
-const quoteRoutes = require('./routes/quoteRoutes');
-const messageRoutes = require('./routes/messageRoutes');
-const userRoutes = require('./routes/userRoutes');
-const authRoutes = require('./routes/authRoutes');
-
 const app = express();
-const port = process.env.PORT || 5000;
-
-// Connect DB
-connectDB();
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:3000', 'https://your-frontend-domain.com'], // Add your frontend domains
-  credentials: true
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Public routes for admin access (temporary solution)
-app.get('/api/public/quotes', async (req, res) => {
-  try {
-    const Quote = require('./models/quoteModel');
-    const quotes = await Quote.find().sort({ createdAt: -1 });
-    res.json(quotes.map(q => ({ 
-      ...q.toObject(), 
-      id: q._id.toString(),
-      submittedAt: q.createdAt
-    })));
-  } catch (error) {
-    console.error('Get quotes error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch quotes',
-      error: error.message 
-    });
-  }
-});
+// Create Uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'Uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Uploads directory created');
+}
 
-app.get('/api/public/messages', async (req, res) => {
-  try {
-    const Message = require('./models/messageModel');
-    const messages = await Message.find().sort({ createdAt: -1 });
-    res.json(messages.map(m => ({ 
-      ...m.toObject(), 
-      id: m._id.toString(),
-      sentAt: m.createdAt
-    })));
-  } catch (error) {
-    console.error('Get messages error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch messages',
-      error: error.message 
-    });
-  }
-});
+// Serve uploaded files
+app.use('/uploads', express.static(uploadsDir));
 
-// Update quote status (public route for admin)
-app.put('/api/public/quotes/:id/status', async (req, res) => {
-  try {
-    const Quote = require('./models/quoteModel');
-    const { id } = req.params;
-    const { status } = req.body;
-    
-    const updatedQuote = await Quote.findByIdAndUpdate(
-      id, 
-      { status }, 
-      { new: true }
-    );
-    
-    if (!updatedQuote) {
-      return res.status(404).json({ message: 'Quote not found' });
-    }
-    
-    res.json({
-      message: 'Quote status updated successfully',
-      quote: updatedQuote
-    });
-  } catch (error) {
-    console.error('Update quote status error:', error);
-    res.status(500).json({ 
-      message: 'Failed to update quote status',
-      error: error.message 
-    });
-  }
-});
+// Database connection
+const connectDB = require('./config/db');
+connectDB();
 
-// Protected routes
-app.use('/api/quotes', quoteRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
+// Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
+app.use('/api/quotes', require('./routes/quoteRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 
-// Serve uploads
-app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
+// Health check route
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    message: 'LCI Rwanda Backend Server is running', 
+    timestamp: new Date().toISOString(),
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-  console.log(`Health check: http://localhost:${port}/health`);
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'LCI Rwanda Backend API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      auth: '/api/auth',
+      messages: '/api/messages',
+      quotes: '/api/quotes',
+      users: '/api/users',
+      health: '/api/health'
+    }
+  });
+});
+
+// 404 handler - FIXED: Use a proper middleware function
+app.use((req, res, next) => {
+  res.status(404).json({ 
+    message: 'Route not found',
+    path: req.originalUrl,
+    method: req.method
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ 
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message 
+  });
+});
+
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 LCI Rwanda Backend Server running on port ${PORT}`);
+  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📍 API Root: http://localhost:${PORT}/`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

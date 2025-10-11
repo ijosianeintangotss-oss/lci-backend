@@ -2,9 +2,9 @@
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 
-// Generate JWT Token - FIXED: Use consistent payload
+// Generate JWT Token
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'your-secret-key', { 
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'fallback-secret-key', { 
     expiresIn: '30d' 
   });
 };
@@ -12,26 +12,27 @@ const generateToken = (userId) => {
 // Client Registration
 exports.clientRegister = async (req, res) => {
   try {
-    console.log('Registration request received:', req.body);
+    console.log('📝 Registration request received');
     
     const { fullName, email, password, phone, company } = req.body;
 
-    // Check required fields
+    // Input validation
     if (!fullName || !email || !password) {
       return res.status(400).json({ 
-        message: 'Full name, email, and password are required' 
+        message: 'Full name, email and password are required' 
       });
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
+    
     if (existingUser) {
-      return res.status(400).json({ 
+      return res.status(409).json({ 
         message: 'User already exists with this email' 
       });
     }
 
-    // Create new user - SET STATUS TO APPROVED IMMEDIATELY
+    // Create new user
     const user = new User({
       fullName,
       email,
@@ -39,18 +40,18 @@ exports.clientRegister = async (req, res) => {
       phone: phone || '',
       company: company || '',
       role: 'client',
-      status: 'approved', // Changed from 'pending' to 'approved'
-      approvedAt: new Date() // Set approval date immediately
+      status: 'approved'
     });
 
     await user.save();
-    console.log('User registered successfully:', user.email);
+    console.log('✅ User registered successfully:', user.email);
 
-    // Generate token for immediate login
+    // Generate token
     const token = generateToken(user._id);
 
+    // Send response
     res.status(201).json({
-      message: 'Registration successful! You can now login to your client portal.',
+      message: 'Registration successful',
       token,
       user: {
         id: user._id,
@@ -58,12 +59,21 @@ exports.clientRegister = async (req, res) => {
         email: user.email,
         phone: user.phone,
         company: user.company,
+        role: user.role,
         status: user.status
       }
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('❌ Registration error:', error);
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation error',
+        error: error.message 
+      });
+    }
+    
     res.status(500).json({ 
       message: 'Server error during registration',
       error: error.message 
@@ -71,14 +81,14 @@ exports.clientRegister = async (req, res) => {
   }
 };
 
-// Client Login - REMOVED STATUS CHECK
+// Client Login
 exports.clientLogin = async (req, res) => {
   try {
-    console.log('Login request received:', req.body);
+    console.log('🔐 Login request received');
     
     const { email, password } = req.body;
 
-    // Check required fields
+    // Input validation
     if (!email || !password) {
       return res.status(400).json({ 
         message: 'Email and password are required' 
@@ -87,16 +97,16 @@ exports.clientLogin = async (req, res) => {
 
     // Find user by email
     const user = await User.findOne({ email });
+    
     if (!user) {
       return res.status(401).json({ 
         message: 'Invalid email or password' 
       });
     }
 
-    // REMOVED STATUS CHECK - All users can login regardless of status
-
     // Check password
     const isPasswordValid = await user.comparePassword(password);
+
     if (!isPasswordValid) {
       return res.status(401).json({ 
         message: 'Invalid email or password' 
@@ -106,8 +116,9 @@ exports.clientLogin = async (req, res) => {
     // Generate token
     const token = generateToken(user._id);
 
-    console.log('User logged in successfully:', user.email);
+    console.log('✅ Login successful for:', user.email);
 
+    // Send response
     res.json({
       message: 'Login successful',
       token,
@@ -123,12 +134,10 @@ exports.clientLogin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     res.status(500).json({ 
       message: 'Server error during login',
       error: error.message 
     });
   }
 };
-
-// Verify Token Middleware - REMOVED (using separate authMiddleware.js)

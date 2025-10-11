@@ -4,7 +4,8 @@ const {
   createQuote, 
   getQuotes, 
   updateQuoteStatus,
-  getClientQuotes 
+  getClientQuotes,
+  getQuoteById
 } = require('../controllers/quoteController');
 const upload = require('../middleware/upload');
 const { authMiddleware } = require('../middleware/authMiddleware');
@@ -17,6 +18,7 @@ router.post('/', upload.fields([{ name: 'files' }, { name: 'paymentScreenshot' }
 // Protected routes
 router.get('/', authMiddleware, getQuotes);
 router.get('/client', authMiddleware, getClientQuotes);
-router.put('/:id/status', authMiddleware, updateQuoteStatus);
+router.get('/:id', authMiddleware, getQuoteById);
+router.put('/:id/status', authMiddleware, upload.fields([{ name: 'replyFiles' }]), updateQuoteStatus);
 
 module.exports = router;

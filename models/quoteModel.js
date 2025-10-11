@@ -55,11 +55,17 @@ const quoteSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  replyFiles: [{
+    type: String
+  }],
   price: {
     type: Number
   },
   estimatedTime: {
     type: String
+  },
+  repliedAt: {
+    type: Date
   },
   files: [{
     type: String

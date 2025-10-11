@@ -37,7 +37,7 @@ exports.createQuote = async (req, res) => {
       });
     }
 
-    // Validate service type - expanded to match frontend services
+    // Validate service type
     const validServices = [
       'translation', 'interpretation', 'proofreading', 'localization', 'content-creation',
       'certified', 'transcription', 'cv-support', 'mtpe', 'glossaries', 
@@ -100,7 +100,7 @@ exports.getQuotes = async (req, res) => {
     res.json(quotes.map(q => ({ 
       ...q.toObject(), 
       id: q._id.toString(),
-      submittedAt: q.createdAt // Add submittedAt for frontend compatibility
+      submittedAt: q.createdAt
     })));
   } catch (error) {
     console.error('Get quotes error:', error);
@@ -111,22 +111,41 @@ exports.getQuotes = async (req, res) => {
   }
 };
 
+// ENHANCED: Update quote with admin reply and files
 exports.updateQuoteStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, adminReply, price, estimatedTime } = req.body;
     
+    // Check if files were uploaded
+    const replyFiles = req.files && req.files['replyFiles'] 
+      ? req.files['replyFiles'].map(file => `/uploads/${file.filename}`)
+      : [];
+
     const updateData = { status };
     if (adminReply !== undefined) updateData.adminReply = adminReply;
     if (price !== undefined) updateData.price = price;
     if (estimatedTime !== undefined) updateData.estimatedTime = estimatedTime;
+    
+    // Add reply files if any
+    if (replyFiles.length > 0) {
+      updateData.replyFiles = replyFiles;
+    }
+
+    // Update repliedAt if admin is replying
+    if (adminReply) {
+      updateData.repliedAt = new Date();
+    }
 
     const updatedQuote = await Quote.findByIdAndUpdate(id, updateData, { new: true });
     if (!updatedQuote) return res.status(404).json({ message: 'Quote not found' });
     
     res.json({
       message: 'Quote updated successfully',
-      quote: updatedQuote
+      quote: {
+        ...updatedQuote.toObject(),
+        id: updatedQuote._id.toString()
+      }
     });
   } catch (error) {
     console.error('Update quote status error:', error);
@@ -161,6 +180,31 @@ exports.getClientQuotes = async (req, res) => {
     console.error('Get client quotes error:', error);
     res.status(500).json({ 
       message: 'Failed to fetch client quotes',
+      error: error.message 
+    });
+  }
+};
+
+// NEW: Get quote by ID for admin
+exports.getQuoteById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const quote = await Quote.findById(id);
+    
+    if (!quote) {
+      return res.status(404).json({ message: 'Quote not found' });
+    }
+
+    res.json({
+      ...quote.toObject(),
+      id: quote._id.toString(),
+      submittedAt: quote.createdAt
+    });
+  } catch (error) {
+    console.error('Get quote by ID error:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch quote',
       error: error.message 
     });
   }

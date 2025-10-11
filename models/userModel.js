@@ -1,5 +1,4 @@
-//models/userModel.js 
-
+// models/userModel.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -36,7 +35,7 @@ const userSchema = new mongoose.Schema({
   status: { 
     type: String, 
     enum: ['pending', 'approved', 'rejected'], 
-    default: 'approved' // Changed default to 'approved'
+    default: 'approved'
   },
   googleId: {
     type: String,
@@ -48,7 +47,7 @@ const userSchema = new mongoose.Schema({
   },
   approvedAt: { 
     type: Date,
-    default: Date.now // Set default to current date
+    default: Date.now
   }
 });
 
@@ -67,7 +66,11 @@ userSchema.pre('save', async function(next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw new Error('Password comparison failed');
+  }
 };
 
 module.exports = mongoose.model('User', userSchema);

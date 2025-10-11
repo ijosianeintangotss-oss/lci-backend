@@ -13,7 +13,7 @@ const router = express.Router();
 router.get('/', authMiddleware, isAdmin, getUsers);
 router.put('/:id/status', authMiddleware, isAdmin, updateUserStatus);
 
-// Client dashboard route - FIXED: No email parameter needed
+// Client dashboard route
 router.get('/dashboard', authMiddleware, getUserDashboard);
 
 module.exports = router;
