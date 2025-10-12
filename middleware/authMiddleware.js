@@ -4,7 +4,12 @@ const User = require('../models/userModel');
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    let token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    // Also check for token in other common locations
+    if (!token && req.headers['x-auth-token']) {
+      token = req.headers['x-auth-token'];
+    }
     
     if (!token) {
       return res.status(401).json({ 
@@ -15,18 +20,18 @@ const authMiddleware = async (req, res, next) => {
     console.log('Token received:', token.substring(0, 20) + '...');
 
     // Check if it's an admin token (base64 encoded)
-    if (token.length > 100) {
+    if (token && token.length > 20) {
       try {
         // Try to decode as base64 (admin token)
         const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
         
         if (decoded.role === 'admin') {
-          console.log('Admin token verified');
+          console.log('Admin token verified for:', decoded.email);
           req.user = {
             id: 'admin',
-            email: 'admin@lcirwanda.com',
+            email: decoded.email || 'admin@lcirwanda.com',
             role: 'admin',
-            fullName: 'Administrator'
+            fullName: decoded.fullName || 'Administrator'
           };
           return next();
         }
@@ -35,22 +40,36 @@ const authMiddleware = async (req, res, next) => {
       }
     }
 
-    // Use the same secret as in authController
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    console.log('Decoded JWT token:', decoded);
-    
-    const user = await User.findById(decoded.id).select('-password');
-    
-    if (!user) {
-      console.log('User not found for ID:', decoded.id);
+    // Try JWT token for regular users
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      console.log('Decoded JWT token:', decoded);
+      
+      const user = await User.findById(decoded.id).select('-password');
+      
+      if (!user) {
+        console.log('User not found for ID:', decoded.id);
+        return res.status(401).json({ 
+          message: 'Token is not valid - user not found' 
+        });
+      }
+
+      // Check if user is approved
+      if (user.status !== 'approved') {
+        return res.status(403).json({ 
+          message: 'Your account is pending approval' 
+        });
+      }
+
+      console.log('User authenticated:', user.email);
+      req.user = user;
+      next();
+    } catch (jwtError) {
+      console.error('JWT verification failed:', jwtError);
       return res.status(401).json({ 
-        message: 'Token is not valid - user not found' 
+        message: 'Invalid token' 
       });
     }
-
-    console.log('User authenticated:', user.email);
-    req.user = user;
-    next();
   } catch (error) {
     console.error('Auth middleware error:', error);
     
