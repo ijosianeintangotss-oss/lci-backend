@@ -41,7 +41,7 @@ const createQuote = async (req, res) => {
     const validServices = [
       'translation', 'interpretation', 'proofreading', 'localization', 'content-creation',
       'certified', 'transcription', 'cv-support', 'mtpe', 'glossaries', 
-      'back-translation', 'ai-translation', 'social-media','any-other-document',
+      'back-translation', 'ai-translation', 'social-media', 'any-other-document'
     ];
     
     if (!validServices.includes(service)) {

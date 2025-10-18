@@ -18,7 +18,7 @@ const quoteSchema = new mongoose.Schema({
   service: {
     type: String,
     required: true,
-    enum: ['translation', 'interpretation', 'proofreading', 'localization', 'content-creation', 'certified', 'transcription', 'cv-support', 'mtpe', 'glossaries', 'back-translation', 'ai-translation', 'social-media']
+    enum: ['translation', 'interpretation', 'proofreading', 'localization', 'content-creation', 'certified', 'transcription', 'cv-support', 'mtpe', 'glossaries', 'back-translation', 'ai-translation', 'social-media', 'any-other-document']
   },
   documentType: {
     type: String,
