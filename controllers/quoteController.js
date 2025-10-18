@@ -44,9 +44,12 @@ const createQuote = async (req, res) => {
       'back-translation', 'ai-translation', 'social-media', 'any-other-document'
     ];
     
+    console.log('Validating service:', service);
+    console.log('Valid services:', validServices);
+    
     if (!validServices.includes(service)) {
       return res.status(400).json({ 
-        message: `Invalid service type. Must be one of: ${validServices.join(', ')}` 
+        message: `Invalid service type: "${service}". Must be one of: ${validServices.join(', ')}` 
       });
     }
 
