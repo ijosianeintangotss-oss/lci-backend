@@ -4,13 +4,13 @@ const Quote = require('../models/quoteModel');
 const createQuote = async (req, res) => {
   try {
     const {
-      fullName, email, phone, service, documentType,
+      fullName, email, phone, service, serviceSubType, documentType,
       sourceLanguage, targetLanguage, urgency, wordCount,
       additionalRequirements, userId
     } = req.body;
 
     console.log('Received quote data:', {
-      fullName, email, phone, service, documentType,
+      fullName, email, phone, service, serviceSubType, documentType,
       sourceLanguage, targetLanguage, urgency, wordCount,
       additionalRequirements
     });
@@ -64,12 +64,15 @@ const createQuote = async (req, res) => {
     const files = req.files && req.files['files'] ? req.files['files'].map(file => `/uploads/${file.filename}`) : [];
     const paymentScreenshot = req.files && req.files['paymentScreenshot'] ? `/uploads/${req.files['paymentScreenshot'][0].filename}` : null;
 
+    // Use custom document type if provided (for "Other" option), otherwise use serviceSubType
+    const finalDocumentType = documentType || serviceSubType;
+
     const newQuote = new Quote({
       fullName, 
       email,
       phone, 
       service, 
-      documentType, 
+      documentType: finalDocumentType, 
       sourceLanguage,
       targetLanguage, 
       urgency: backendUrgency,
