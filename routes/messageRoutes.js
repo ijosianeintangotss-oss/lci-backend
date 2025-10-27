@@ -7,7 +7,7 @@ const {
   updateMessageReply 
 } = require('../controllers/messageController');
 const { authMiddleware, isAdmin } = require('../middleware/authMiddleware');
-const upload = require('../middleware/upload');
+const { uploadReplyFiles } = require('../middleware/upload'); // CHANGED
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ router.get('/', authMiddleware, isAdmin, getMessages);
 // Protected routes - Client can access their own messages
 router.get('/client', authMiddleware, getClientMessages);
 
-// Protected routes - ADMIN only for replies with file upload
-router.put('/:id/reply', authMiddleware, isAdmin, upload.array('replyFiles'), updateMessageReply);
+// Protected routes - ADMIN only for replies with file upload - FIXED: Use uploadReplyFiles
+router.put('/:id/reply', authMiddleware, isAdmin, uploadReplyFiles, updateMessageReply);
 
 module.exports = router;

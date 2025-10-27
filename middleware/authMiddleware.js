@@ -13,7 +13,7 @@ const authMiddleware = async (req, res, next) => {
     
     if (!token) {
       return res.status(401).json({ 
-        message: 'No token, authorization denied' 
+        message: 'Not authorized, no token' 
       });
     }
 
@@ -50,7 +50,7 @@ const authMiddleware = async (req, res, next) => {
       if (!user) {
         console.log('User not found for ID:', decoded.id);
         return res.status(401).json({ 
-          message: 'Token is not valid - user not found' 
+          message: 'Not authorized, user not found' 
         });
       }
 
@@ -66,29 +66,31 @@ const authMiddleware = async (req, res, next) => {
       next();
     } catch (jwtError) {
       console.error('JWT verification failed:', jwtError);
+      
+      if (jwtError.name === 'JsonWebTokenError') {
+        return res.status(401).json({ 
+          message: 'Invalid token' 
+        });
+      } else if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          message: 'Token expired' 
+        });
+      }
+      
       return res.status(401).json({ 
-        message: 'Invalid token' 
+        message: 'Not authorized, token failed' 
       });
     }
   } catch (error) {
     console.error('Auth middleware error:', error);
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ 
-        message: 'Invalid token' 
-      });
-    } else if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
-        message: 'Token expired' 
-      });
-    }
-    
-    res.status(401).json({ 
-      message: 'Token is not valid',
+    res.status(500).json({ 
+      message: 'Server error in authentication',
       error: error.message 
     });
   }
 };
+
+const protect = authMiddleware; // Alias for compatibility
 
 const isAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
@@ -100,4 +102,11 @@ const isAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { authMiddleware, isAdmin };
+const adminOnly = isAdmin; // Alias for compatibility
+
+module.exports = { 
+  authMiddleware, 
+  isAdmin, 
+  protect, 
+  adminOnly 
+};

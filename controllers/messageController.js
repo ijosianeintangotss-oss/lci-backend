@@ -22,17 +22,35 @@ const createMessage = async (req, res) => {
 const getMessages = async (req, res) => {
   try {
     const messages = await Message.find().sort({ createdAt: -1 });
-    res.json(messages.map(m => ({ 
-      ...m.toObject(), 
-      id: m._id.toString(),
-      sentAt: m.createdAt 
-    })));
+    
+    // FIXED: Include full URLs for files
+    const messagesWithUrls = messages.map(message => {
+      const messageObj = message.toObject();
+      
+      // Build full URLs for reply files
+      if (messageObj.replyFiles && messageObj.replyFiles.length > 0) {
+        messageObj.replyFiles = messageObj.replyFiles.map(file => {
+          if (!file.startsWith('http')) {
+            return `${process.env.BASE_URL || 'https://apis.translatenexus.com'}${file}`;
+          }
+          return file;
+        });
+      }
+      
+      return {
+        ...messageObj,
+        id: message._id.toString(),
+        sentAt: message.createdAt 
+      };
+    });
+    
+    res.json(messagesWithUrls);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get messages for specific client - FIXED: Ensure this function exists
+// Get messages for specific client - FIXED with URL building
 const getClientMessages = async (req, res) => {
   try {
     const { email } = req.query;
@@ -45,11 +63,25 @@ const getClientMessages = async (req, res) => {
     const messages = await Message.find({ email }).sort({ createdAt: -1 });
     console.log('Found messages:', messages.length);
 
-    const messagesWithId = messages.map(message => ({
-      ...message.toObject(),
-      id: message._id.toString(),
-      sentAt: message.createdAt
-    }));
+    const messagesWithId = messages.map(message => {
+      const messageObj = message.toObject();
+      
+      // Build full URLs for reply files
+      if (messageObj.replyFiles && messageObj.replyFiles.length > 0) {
+        messageObj.replyFiles = messageObj.replyFiles.map(file => {
+          if (!file.startsWith('http')) {
+            return `${process.env.BASE_URL || 'https://apis.translatenexus.com'}${file}`;
+          }
+          return file;
+        });
+      }
+      
+      return {
+        ...messageObj,
+        id: message._id.toString(),
+        sentAt: message.createdAt
+      };
+    });
 
     res.json(messagesWithId);
   } catch (error) {
@@ -61,11 +93,14 @@ const getClientMessages = async (req, res) => {
   }
 };
 
-// Update message with admin reply - FIXED with file upload
+// Update message with admin reply - FIXED with proper file handling
 const updateMessageReply = async (req, res) => {
   try {
     const { id } = req.params;
     const { adminReply } = req.body;
+
+    console.log('Updating message:', id);
+    console.log('Uploaded files:', req.files);
 
     const updateData = {
       adminReply,
@@ -73,9 +108,10 @@ const updateMessageReply = async (req, res) => {
       repliedAt: new Date()
     };
 
-    // Handle file uploads
+    // FIXED: Handle file uploads properly - check for files array
     if (req.files && req.files.length > 0) {
       updateData.replyFiles = req.files.map(file => `/uploads/${file.filename}`);
+      console.log('Added reply files:', updateData.replyFiles);
     }
 
     const updatedMessage = await Message.findByIdAndUpdate(
@@ -88,20 +124,34 @@ const updateMessageReply = async (req, res) => {
       return res.status(404).json({ message: 'Message not found' });
     }
 
+    // Build full URLs for response
+    const responseMessage = updatedMessage.toObject();
+    if (responseMessage.replyFiles && responseMessage.replyFiles.length > 0) {
+      responseMessage.replyFiles = responseMessage.replyFiles.map(file => {
+        if (!file.startsWith('http')) {
+          return `${process.env.BASE_URL || 'https://apis.translatenexus.com'}${file}`;
+        }
+        return file;
+      });
+    }
+
     res.json({
       message: 'Reply sent successfully',
       updatedMessage: {
-        ...updatedMessage.toObject(),
+        ...responseMessage,
         id: updatedMessage._id.toString()
       }
     });
   } catch (error) {
     console.error('Update message reply error:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      message: 'Failed to update message reply',
+      error: error.message 
+    });
   }
 };
 
-// Export all functions - FIXED: Added exports
+// Export all functions
 module.exports = {
   createMessage,
   getMessages,

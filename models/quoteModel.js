@@ -45,17 +45,18 @@ const quoteSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  status: {
-    type: String,
-    enum: ['pending', 'inProgress', 'completed', 'cancelled'],
-    default: 'pending'
-  },
+ status: {
+  type: String,
+  enum: ['pending', 'Catering', 'quoted', 'accepted', 'declined', 'inProgress', 'completed', 'cancelled'],
+  default: 'pending'
+},
   adminReply: {
     type: String,
     trim: true
   },
   price: {
-    type: Number
+    type: String,
+    trim: true
   },
   estimatedTime: {
     type: String
@@ -71,6 +72,12 @@ const quoteSchema = new mongoose.Schema({
   }],
   paymentScreenshot: {
     type: String
+  },
+  acceptedAt: {
+    type: Date
+  },
+  declinedAt: {
+    type: Date
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
